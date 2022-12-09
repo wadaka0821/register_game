@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.template import loader
 from django.utils import timezone
 import uuid
+import json
 
 from .models import Product, Purchase, History
 
@@ -11,25 +12,39 @@ def purchase(request, history_id):
     return HttpResponse("This is Purchase Page")
 
 def count_up(request):
-    print(request.POST.get('history_id'))
-    print(request.POST.get('product_id'))
 
     history_id = uuid.UUID(request.POST.get('history_id'))
     product_id = uuid.UUID(request.POST.get('product_id'))
     history = History.objects.get(history_id=history_id)
     product = Product.objects.get(product_id=product_id)
 
-    purchases = history.purchase_set.all()
-    if len(purchases) and len(purchases.filter(product_id=product)):
-        purchase = purchases.get(product_id=product)
-        # purchase = purchases.get(product_id=product.product_id)
+    purchase = history.purchase_set.filter(product_id=product)
+    if len(purchase):
+        purchase = purchase[0]
         purchase.purchase_num += 1
+        purchase.save()
     else:
-        purchase = history.purchase_set.create(product_id=product, purchase_num=1)
-    history.total_price += purchase.product_id.price
+        history.purchase_set.create(product_id=product, purchase_num=1)
+    history.total_price += product.price
     history.total_product += 1
+    history.save()
 
-    return HttpResponse('test')
+    backet = list()
+    for purchase in history.purchase_set.all():
+        tmp_dit = {
+            'product_name':purchase.product_id.product_name,
+            'price':purchase.product_id.price,
+            'purchase_num':purchase.purchase_num,
+            'total':purchase.product_id.price * purchase.purchase_num,
+        }
+        backet.append(tmp_dit)
+    
+    params = {
+        'backet':backet,
+    }
+
+    json_str = json.dumps(params, ensure_ascii=False, indent=2)
+    return HttpResponse(json_str)
 
 def index(request):
     product_list = Product.objects.all()

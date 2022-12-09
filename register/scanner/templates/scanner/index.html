@@ -1,35 +1,135 @@
-{% if product_list %}
-    <ul>
-        {% for product in product_list %}
-        <form id="count_up_{{product.product_name}}" action="{% url 'scanner:count_up' %}" method="POST">
-            {% csrf_token %}
-            <input type="submit" value="{{product.product_name}}"></input>
-            <input type="submit" id="product_id" value="{{product.product_id}}" ></input>
-            <input type="submit" id="history_id" value="{{history_id}}" ></input>
-        </form>
-        {% endfor %}
-    </ul>
-{% endif %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="ja">
+ <head>
+ <meta charset="utf-8">
+ <title>Register game</title>
+ <meta name="description" content="ディスクリプションを入力">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <script src="{% static "qr/jsQR/dist/jsQR.js" %}"></script>
+ <script src="{% static "qr/html5-qrcode/minified/html5-qrcode.min.js" %}"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<input type="button" value="{{history_id}}" id="history_id" />
+<h1>QRCode Reader</h1>
+<div id="reader"></div>
+<div id="reader-results"></div>
+<div id="loadingMessage" hidden>🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
+  <canvas id="canvas" hidden></canvas>
+  <div id="output" hidden>
+    <div id="outputMessage" hidden>No QR code detected.</div>
+    <div hidden><b>Data:</b> <span id="outputData"></span></div>
+  </div>
+<form id="activateScanner">
+    <input type="submit" id="activate" value="Activate Scanner"></input>
+</form>
 <h2>Basket</h2>
-<table>
+<table id="backet">
+    <thead>
     <tr>
         <th>Name</th>
         <th>Price</th>
         <th>Num</th>
         <th>Total</th>
     </tr>
-    {% for purchase in purchase_list %}
-        <tr>
-            <td>{{ purchase.product_name }}</td>
-            <td>{{ purchase.price }}</td>
-            <td>{{ purchase.purchase_num }}</td>
-            <td>{{ purchase.total }}</td>
-        </tr>
-    {% endfor %}
+    </thead>
+    <tbody>
+
+    </tbody>
 </table>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script>
-        function getCookie(name) {
+<div id="list"><ul class="list-group"></ul></div>
+<script>
+    let html5QrcodeScanner = null
+    function onScanSuccess(decodedText, decodedResult) {
+    // handle the scanned code as you like, for example:
+        const history_id = document.getElementById("history_id").value;
+        const parsedText = JSON.parse(decodedText);
+        parsedText.history_id = history_id;
+        $.ajax({
+            url:"{% url 'scanner:count_up' %}",
+            method:"POST",
+            dataType:"json",
+            data:parsedText,
+        }).done(function (data, testStatus, jqXHR) {
+            alert(data.backet);
+            appendList(data.backet);
+        });
+        html5QrcodeScanner.clear();
+    }
+
+    function appendList(data) {
+        $('#backet').find('tbody tr').remove()
+        $.each(data, function(num, data) {
+            $('#backet>tbody').append("<tr><td>"+data.product_name+"</td><td>"+data.price+"</td><td>"+data.purchase_num+"</td><td>"+data.total+"</td></tr>")
+        });
+    }
+
+    function activateScanner() {
+        const config = { fps: 10, qrbox: {width: 250, height: 250} };
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
+        html5QrcodeScanner.render(onScanSuccess);
+    }
+    activateScanner();
+
+    var video = document.createElement("video");
+    var canvasElement = document.getElementById("canvas");
+    var canvas = canvasElement.getContext("2d");
+    var loadingMessage = document.getElementById("loadingMessage");
+    var outputContainer = document.getElementById("output");
+    var outputMessage = document.getElementById("outputMessage");
+    var outputData = document.getElementById("outputData");
+
+
+    function drawLine(begin, end, color) {
+      canvas.beginPath();
+      canvas.moveTo(begin.x, begin.y);
+      canvas.lineTo(end.x, end.y);
+      canvas.lineWidth = 4;
+      canvas.strokeStyle = color;
+      canvas.stroke();
+    }
+
+    // Use facingMode: environment to attemt to get the front camera on phones
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+    //   video.srcObject = stream;
+      video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+      video.play();
+      requestAnimationFrame(tick);
+    });
+    
+
+    function tick() {
+      loadingMessage.innerText = "⌛ Loading video..."
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        loadingMessage.hidden = true;
+        canvasElement.hidden = false;
+        outputContainer.hidden = false;
+
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+        var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+        if (code) {
+          drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+          drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+          drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+          drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+          outputMessage.hidden = true;
+          outputData.parentElement.hidden = false;
+          outputData.innerText = code.data;
+        } else {
+          outputMessage.hidden = false;
+          outputData.parentElement.hidden = true;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 var cookies = document.cookie.split(';');
@@ -60,21 +160,13 @@
             }
         });
 
-        $('[id^=count_up_]').on('submit', function(e) {
+        $('#activateScanner').on('submit', function(e) {
             e.preventDefault();
 
-            $.ajax({
-                'url': '{% url "scanner:count_up" %}',
-                'type': 'POST',
-                'data': {
-                    'product_id': $('#product_id').val(),
-                    'history_id': $('#history_id').val(),
-                },
-                'dataType': 'json'
-            })
-            .done(function(response){
-                $('.result').prepend('<p>引き算結果：' + response.minus + '</p>');
-                $('.result').prepend('<p>足し算結果：' + response.plus + '</p>');
-            });
+            activateScanner();
         });
-    </script>
+  </script>
+    
+<footer></footer>
+</body>
+</html>
