@@ -10,29 +10,35 @@
  <script src="{% static "qr/jsQR/dist/jsQR.js" %}"></script>
  <script src="{% static "qr/html5-qrcode/minified/html5-qrcode.min.js" %}"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ <link rel="stylesheet" href="{% static 'scanner/css/index.css' %}">
 </head>
 <body>
-<input type="button" value="{{history_id}}" id="history_id" />
-<h1>QRCode Reader</h1>
-<div id="reader"></div>
-<div id="reader-results"></div>
+<input type="hidden" value="{{history_id}}" id="history_id" class="history-id" />
+<div class="title">
+    <img src="{% static "scanner/image/register.png" %}" class="register-icon" />
+    <h1>れじ　あぷり</h1>
+</div>
+<div id="reader" class="qr-reader"></div>
 <div id="loadingMessage" hidden>🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
   <canvas id="canvas" hidden></canvas>
   <div id="output" hidden>
     <div id="outputMessage" hidden>No QR code detected.</div>
     <div hidden><b>Data:</b> <span id="outputData"></span></div>
   </div>
-<form id="activateScanner">
-    <input type="submit" id="activate" value="Activate Scanner"></input>
+<form id="activateScanner" class="activation-form">
+    <input type="submit" id="activate" value="よみとる" class="activation-botton"></input>
 </form>
-<h2>Basket</h2>
-<table id="backet">
+<div class="cart-div">
+    <img src="{% static "scanner/image/cart.png" %}" class="cart" />
+    <h2>かいものかご</h2>
+</div>
+<table id="backet" class="backet">
     <thead>
     <tr>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Num</th>
-        <th>Total</th>
+        <th>なまえ</th>
+        <th>ねだん</th>
+        <th>かず</th>
+        <th>ごうけい</th>
     </tr>
     </thead>
     <tbody>
@@ -66,7 +72,11 @@
     function appendList(data) {
         $('#backet').find('tbody tr').remove()
         $.each(data, function(num, data) {
-            $('#backet>tbody').append("<tr><td>"+data.product_name+"</td><td>"+data.price+"</td><td>"+data.purchase_num+"</td><td>"+data.total+"</td></tr>")
+            if (data.price != 'Total') {
+                $('#backet>tbody').append("<tr><td>"+data.product_name+"</td><td class='number'>"+data.price+"</td><td class='number'>"+data.purchase_num+"</td><td class='number'>"+data.total+"</td></tr>")
+            } else {
+                $('#backet>tbody').append("<tr><td colspan='2'>"+data.price+"</td><td class='number'>"+data.purchase_num+"</td><td class='number'>"+data.total+"</td></tr>")
+            }
         });
     }
 
@@ -170,6 +180,20 @@
 
         activateScanner();
     });
+
+    window.onload = function() {
+        {% autoescape off %}
+        var backet = "{{backet}}";
+        {% endautoescape %}
+        var replace_backet = backet.replace('\'', '\"');
+        while ( replace_backet !== backet) {
+            backet = backet.replace('\'', '\"');
+            replace_backet = replace_backet.replace('\'', '\"');
+        }
+        const backetList = JSON.parse(backet);
+        appendList(backetList);
+    }
+    console.log(load);
   </script>
     
 <footer></footer>
