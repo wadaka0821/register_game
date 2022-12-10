@@ -26,6 +26,8 @@ class History(models.Model):
                                                                                        self.total_product)
 
 class Purchase(models.Model):
+    # history_id = History.history_id
+    # product_id = Product.product_id
     history_id = models.ForeignKey(History, on_delete=models.CASCADE)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     purchase_num = models.PositiveSmallIntegerField()
