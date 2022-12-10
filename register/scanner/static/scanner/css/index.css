@@ -1,0 +1,71 @@
+.title {
+    display: flex;
+
+}
+
+.title h1 {
+    padding-bottom: 5px;
+    border-bottom: #ffe0f1 5px dotted;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+}
+
+.register-icon {
+    height: 60px;
+    margin: 0px 5px;
+}
+
+.activation-form {
+    text-align: center;
+}
+
+.activation-botton {
+    display: inline-block;
+    width: 50%;
+    margin: 5px 0px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: medium;
+    background-color: #ffa1ff;
+    border-radius: 30px;
+}
+
+.activation-botton:hover {
+    background-color: #ffbeff;
+}
+
+.backet {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.backet th {
+    background-color: #ffe0f1;
+    border: solid 1px #000000;
+}
+
+.backet td {
+    background-color: #e0e0e0;
+    border: solid 1px #000000;
+}
+
+.backet tr:nth-of-type(2n-1) td{
+    background-color: #ffffff;
+}
+
+.number {
+    text-align: right;
+}
+
+.cart-div {
+    display: flex;
+}
+
+.cart-div h2 {
+    padding-bottom: 5px;
+    border-bottom: #ffe0f1 3px dotted;
+}
+
+.cart {
+    height: 60px;
+}
+
