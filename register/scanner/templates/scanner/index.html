@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% csrf_token %}
 <html lang="ja">
  <head>
  <meta charset="utf-8">
@@ -46,14 +47,18 @@
         const history_id = document.getElementById("history_id").value;
         const parsedText = JSON.parse(decodedText);
         parsedText.history_id = history_id;
+        if (csrftoken == null) csrftoken = getCookie('csrftoken');
         $.ajax({
             url:"{% url 'scanner:count_up' %}",
             method:"POST",
             dataType:"json",
             data:parsedText,
         }).done(function (data, testStatus, jqXHR) {
-            alert(data.backet);
             appendList(data.backet);
+        }).fail(function(jqXHR, textStatus, errorThrown){
+            alert(Object.keys(jqXHR));
+            alert(jqXHR.setRequestHeader);
+            alert(errorThrown);
         });
         html5QrcodeScanner.clear();
     }
@@ -130,41 +135,41 @@
     }
 
     function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = jQuery.trim(cookies[i]);
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
+        return cookieValue;
+    }
 
-        var csrftoken = getCookie('csrftoken');
+    var csrftoken = getCookie('csrftoken');
 
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
 
-        $.ajaxSetup({
-            beforeSend: function (xhr, settings) {
-                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                }
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
-        });
+        }
+    });
 
-        $('#activateScanner').on('submit', function(e) {
-            e.preventDefault();
+    $('#activateScanner').on('submit', function(e) {
+        e.preventDefault();
 
-            activateScanner();
-        });
+        activateScanner();
+    });
   </script>
     
 <footer></footer>

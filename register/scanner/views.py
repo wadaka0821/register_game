@@ -30,14 +30,25 @@ def count_up(request):
     history.save()
 
     backet = list()
+    total_price = 0
+    total_num = 0
     for purchase in history.purchase_set.all():
-        tmp_dit = {
+        tmp_dict = {
             'product_name':purchase.product_id.product_name,
             'price':purchase.product_id.price,
             'purchase_num':purchase.purchase_num,
             'total':purchase.product_id.price * purchase.purchase_num,
         }
-        backet.append(tmp_dit)
+        backet.append(tmp_dict)
+        total_price += tmp_dict['total']
+        total_num += tmp_dict['purchase_num']
+    
+    backet.append({
+        'product_name':'',
+        'price':'Total',
+        'purchase_num':total_num,
+        'total':total_price,
+    })
     
     params = {
         'backet':backet,
